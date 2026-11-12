@@ -1,52 +1,65 @@
-# Local Voice Android 0.4
+# Selia Speak contract
 
-## Outcome
+## Primary flow
 
-An installable Android APK whose primary flow is:
+Introduction, permission disclosure, verified model installation, selection, then
+a dashboard with status, stop/resume, permissions, and model selection.
 
-`floating mic -> in-memory PCM -> local Whisper -> local Qwen semantic edit -> validated accessibility insertion`
+The normal keyboard remains selected. The movable accessibility overlay requires
+a visible keyboard, eligible focused field, accepted disclosure, and enabled
+dictation. Tap toggles recording; holding supports push-to-talk. Cancel and an
+eight-second Undo are separate controls.
 
-## Required behavior
+Reported password, numeric and phone input types are refused. Some Compose editors
+report no input type. Compatibility requires an editable Android EditText with a
+text replacement action, plus every existing visibility, password and package
+guard. Opaque numeric intent cannot be inferred and is not claimed to be blocked.
 
-- Preserve the user's normal keyboard.
-- Use an AccessibilityService-owned movable microphone overlay.
-- Keep captured audio in bounded RAM and discard it after transcription.
-- Run multilingual Whisper STT and semantic editing on the phone after one verified model-pack download.
-- Reject cloud inference and cleartext traffic.
-- Refuse secure/password fields.
-- Insert only when the focused field still matches the captured snapshot.
-- Keep a clipboard fallback that requires an explicit Copy action, marks approved copies sensitive, and discards its private preview after one minute. Keep one-step bounded undo.
-- Read user text with an installed Android TTS voice for the selected speech language.
-- Keep transcript/audio history off.
-- Keep independent cleanup, dictionary, snippets, and calibration data per language profile.
-- Apply exact dictionary replacements before semantic cleanup, including in Raw mode.
-- Expand a snippet only when the complete spoken input matches its trigger.
-- Offer a guided 1–2 minute local calibration that measures the displayed sample and requires confirmation before storing suggestions.
-- Support tap-to-toggle and hold-to-talk with separate cancel and bounded undo actions.
-- Let the user change the bubble size and opacity while retaining a minimum 48 dp touch target.
-- Use English UI by default and offer every supported Tier 1 speech language independently of system locale.
-- Put supported system and keyboard languages first in the speech-language picker.
-- Show localized writing-style examples and persist one language profile.
-- Let the user paste or import a bounded UTF-8 writing sample for local style imitation.
-- Keep Personal Voice in a separate consent-gated Voice Lab.
+## Ownership
 
-## Multilingual model pack
+* SpeakSettings owns bounded, versioned, atomically committed configuration.
+* ModelCatalog owns compatible exports, capabilities, provenance, sizes, languages,
+  and optional comparable evaluation records.
+* ModelRepository owns installation, hashes, readiness, resumable partials,
+  mutation exclusion, shared assets, deletion, and runtime leases.
+* LocalRecognizer and SpeechLanguageDetector own native resources. One ASR or
+  language detector holds the process speech slot.
+* VoiceAccessibilityService owns recording sessions, native work ordering,
+  targets, provisional writes, cancellation, and final insertion.
+* FieldDraft owns only the current dictation span and expected post-write field.
+* SemanticEngine owns optional local text inference. Parsed output always passes
+  through field guards; it has no direct document editing authority.
 
-- Sherpa-ONNX Whisper tiny INT8: 103,609,903 bytes.
-- LiteRT-LM Qwen3 0.6B mixed INT4: 497,664,000 bytes.
-- Total download: 601,273,903 bytes.
+## Language selection
 
-Every file uses a pinned revision, expected byte count, SHA-256 verification, resumable `.part` download, and atomic rename.
+Normal mode uses one installed recognizer and a supported manual hint or automatic
+transcription. A model that accepts no language hint receives none. Multilingual
+recognition and explicit language identification are distinct.
 
-The current production-claim scope is Czech, English, German, French, and Spanish. Whisper and Qwen are multilingual, but other languages are not offered as production-quality without a benchmark.
+Advanced routing identifies approximately the first three seconds, closes the
+detector, and selects an explicitly configured installed recognizer. The captured
+prefix is replayed. Missing, unknown, unmapped, and unsupported languages fail
+explicitly. The current detector exposes no confidence score.
 
-## Personal Voice boundary
+## Recording and editing
 
-Voice Lab records one 10–30 second mono PCM reference into Android's credential-encrypted app storage. It records whether the speaker confirmed ownership or explicit permission. It does not claim to train a new model.
+Audio is mono 16 kHz PCM held in bounded RAM, with a 900-second ceiling. Native
+streaming produces provisional text during recording. Batch transcription finishes
+after Stop. Simulated streaming is not advertised as native streaming.
 
-Personal-voice synthesis is intentionally locked. Current Android-ready PocketTTS and ZipVoice integrations do not have verified Czech output. The stored reference can be used only after a Czech-capable engine passes quality, licensing, memory, and device benchmarks.
+Semantic editing runs after Stop in bounded UTF-8 chunks with a recent draft tail.
+Operations append, replace that tail, replace the whole current draft, or report
+unsupported editing. Global replacement affects only the current dictation.
+Unseen older content cannot be rewritten. Semantic failure does not silently
+insert raw text; explicit Copy remains available.
 
-## Non-goals for 0.3
+Text is bounded to 50,000 UTF-16 characters. Parsers consume complete values and
+reject malformed syntax, duplicate/unknown fields, and wrong types without echoing
+private payloads in errors.
 
-- Cloud providers, accounts, analytics, automatic permanent learning, voice cloning, paired-PC mode, and Play Store publication.
-- On-device acoustic fine-tuning of Whisper weights. Calibration is an explicit local correction layer, not model training.
+## Distribution
+
+Minimum API 28. Internal namespace remains cz.localvoice.app. New install identity
+is com.majkeylab.seliaspeak. Google Play setup is a draft. Production publication,
+cloud inference, accounts, desktop clients, voice cloning, and acoustic fine-tuning
+are outside this Android iteration.

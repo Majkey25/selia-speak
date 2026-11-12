@@ -31,6 +31,51 @@ class FieldTargetTest {
     }
 
     @Test
+    fun supportsComposeTextWithAnUnknownInputType() {
+        val compose = text.copy(
+            inputType = InputType.TYPE_NULL,
+            className = "android.widget.EditText",
+            supportsSetText = true,
+        )
+        assertTrue(FieldTargetPolicy.isSupported(compose, emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(password = true), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(editable = false), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(enabled = false), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(visible = false), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose, setOf(compose.packageName)))
+    }
+
+    @Test
+    fun rejectsOpaqueFieldsWithoutTheTextEditingContract() {
+        val compose = text.copy(
+            inputType = InputType.TYPE_NULL,
+            className = "android.widget.EditText",
+            supportsSetText = true,
+        )
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(className = null), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(className = "android.widget.TextView"), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(compose.copy(supportsSetText = false), emptySet()))
+        assertFalse(FieldTargetPolicy.isSupported(
+            compose.copy(inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES), emptySet(),
+        ))
+    }
+
+    @Test
+    fun editingCapabilitiesDoNotBypassReportedSensitiveTypes() {
+        val compose = text.copy(className = "android.widget.EditText", supportsSetText = true)
+        listOf(
+            InputType.TYPE_CLASS_NUMBER,
+            InputType.TYPE_CLASS_PHONE,
+            InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD,
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD,
+        ).forEach { inputType ->
+            assertFalse(FieldTargetPolicy.isSupported(compose.copy(inputType = inputType), emptySet()))
+        }
+    }
+
+    @Test
     fun rejectsSensitiveInputTypes() {
         assertFalse(FieldTargetPolicy.isSupported(text.copy(password = true), emptySet()))
         assertFalse(
@@ -71,6 +116,8 @@ class FieldTargetTest {
         assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(packageName = "com.other")))
         assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(windowId = 8)))
         assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(viewId = "subject")))
+        assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(className = "android.widget.EditText")))
+        assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(supportsSetText = true)))
         assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(text = "Ahoj!")))
         assertFalse(FieldTargetPolicy.isFresh(snapshot, text.copy(selectionStart = 0, selectionEnd = 0)))
     }

@@ -1,181 +1,93 @@
-# Android QA record
+# Selia Speak verification
 
-## 0.4.0 candidate - 2026-08-25
+## Baseline
 
-- 47 JVM tests passed; zero failures and zero skips.
-- Android lint passed with zero errors and seven warnings.
-- Debug APK and Android test APK assembled in a clean 84-task gate.
-- Clean install opened an English onboarding flow with English selected by default.
-- The picker displayed English, Czech, German, French, and Spanish on an English-locale API 35 AVD.
-- Selecting Czech kept the UI in English and loaded Czech writing-style examples.
-- Legacy Czech style and writing-sample data survived a Czech to English to Czech language round trip in instrumentation.
-- Existing suffixed cleanup, dictionary, and snippet data survived the same migration test.
-- Home, Dictionary, Settings, custom-style onboarding, and the accessibility disclosure rendered in English.
-- Source scan found Czech only in intentional Czech speech samples and semantic few-shots.
-- APK: 61,515,804 bytes; SHA-256 `b45326a3c9827a548978a18dbc0b6a8b16483ecf7a4fbc9e1da86687d634c1b6`.
-- Package `cz.localvoice.app`, version `0.4.0` (`6`), minimum API 26, target API 36.
-- APK Signature Scheme v2 verified with the Android debug certificate.
-- Exact release APK installed and launched to a resumed `MainActivity` on the isolated `LocalVoice_English_QA_API35_25Aug` AVD.
+On 12 November 2026, inherited Local Voice revision
+51181a9b9646afe4c3509a8f479a8cdacf0eabe2 passed 63 JVM tests, Android lint,
+and debug assembly. The clean build took 2 minutes 14 seconds with 58 tasks.
+This was a build baseline, not a hardware dictation benchmark.
 
-## 0.3.2 candidate - 2026-08-22
+## Integrated candidate
 
-- 44 JVM tests passed; zero failures and zero skips.
-- Android lint passed with zero errors and six warnings.
-- Debug APK and Android test APK assembled in a clean 84-task gate.
-- Recalibration applies the active language dictionary before alignment and does not suggest confirmed terms again.
-- Candidate corrections must improve the real one-pass dictionary output; rules that only work through chaining are rejected.
-- Raw sample accuracy remains separate from accuracy after cumulative personal corrections.
-- APK: 61,515,380 bytes; SHA-256 `ede87908d00945bbf74c9e06d202a06a2888dbae94906275a6cda387a0654bfe`.
-- Package `cz.localvoice.app`, version `0.3.2` (`5`), minimum API 26, target API 36.
-- APK Signature Scheme v2 verified with the Android debug certificate.
-- The exact `release/LocalVoice-0.3.2.apk` installed and cold-launched on `emulator-5600` without a fresh fatal log.
-- All 16 current Wispr Flow and all 8 current Phravia Google Play screenshots were archived under ignored `.reference` evidence.
+On the same Windows host, Selia Speak passed 87 JVM tests without failures or
+skips, Android lint, debug assembly, and Android-test APK assembly.
+The final local gate completed in 1 minute 37 seconds with 87 tasks, 25 executed
+and 62 up to date.
+This incremental time is not comparable to the clean baseline time.
 
-## 0.3.1 candidate - 2026-08-22
+The first attempt found an invalid JUnit method return type in ModelRepositoryTest.
+Explicit runBlocking<Unit> fixed discovery; assertions remained unchanged.
 
-Release gate:
+New checks cover strict model/settings responses, installed language routing,
+rare variants, real HTTP/filesystem installation, same-size corrupt weights,
+response bounds, leases, blocked-transport cancellation, and session-owned editing.
 
-- `:app:testDebugUnitTest`: 42 tests passed; zero failures and zero skips.
-- `:app:lintDebug`: passed with zero errors and six warnings.
-- `:app:assembleDebug` and `:app:assembleDebugAndroidTest`: passed.
-- Combined clean gate: `BUILD SUCCESSFUL` with all 84 tasks executed.
-- APK: 61,514,584 bytes; SHA-256 `463f793da93ec02bf3a37e782e349a4db697a0998602e38562a7adc2d034708e`.
-- Package `cz.localvoice.app`, version `0.3.1` (`4`), minimum API 26, target API 36.
-- APK Signature Scheme v2 verified with the Android debug certificate.
+## Hardware gates
 
-Recognition personalization:
+Connected HUAWEI YAL-L21 reports Android 10 and arm64. Observed memory before
+installation: 5,765,952 KiB total, 2,288,608 KiB available. Selia Speak installs
+separately from Local Voice.
 
-- Tier-one calibration prompts contain 180 to 260 words and render as a scrollable roughly two-minute script.
-- Consecutive substitutions such as `lokal vojs` are proposed as one `Local Voice` phrase correction.
-- Correction runs longer than four words are rejected.
-- Dictionary add, save, process restart, reload, and delete passed live on `emulator-5600`.
-- The updated Czech calibration and dictionary screens rendered without a fresh `AndroidRuntime` crash.
-- The exact `release/LocalVoice-0.3.1.apk` installed as an upgrade and cold-launched with version `0.3.1` (`4`).
+Physical onboarding, microphone denial/retry, accessibility disclosure, model
+browser, model download and selection were exercised on Huawei. Android 9 API 28
+x86_64 emulator installation, onboarding, browser and downloads also ran.
 
-Competitor refresh:
+RecognitionModelInstrumentedTest passed on both devices with actual catalog
+Zipformer weights and the pinned public 6,625 ms fixture. Huawei: 1,541 ms load,
+127 ms to a nonempty partial after load, 2,295 ms total. Android 9 emulator:
+1,202 ms load, 104 ms first partial, 2,135 ms total. These are single runs feeding
+audio faster than real time, not microphone-to-screen latency or accuracy scores.
 
-- Current official Play screenshots for Wispr Flow 2.2.4 and Phravia 1.6.7 were archived under ignored `.reference` research evidence.
-- Phravia onboarding rendered from the signed sideload, then Play licensing opened Google Play when setup continued. The license was not bypassed.
-- Wispr Flow's developer-disabled APKMirror download was respected. Its package, version, certificate, requirements, screenshots, and current feature set were verified from Google Play, Wispr documentation, and APKMirror metadata.
-- The isolated AVD has no Google account. No public Google Play test account exists, and no unrecoverable account or fake phone verification was created.
+The same Android 9 test passed with Wi-Fi and mobile data disabled and dumpsys
+connectivity reporting `Active default network: none`. Both settings were restored.
 
-## 0.3.0 checkpoint — 2026-08-22
+On Huawei, the UI automation helper suppresses normal accessibility services.
+After closing it, dumpsys confirmed Selia Speak bound. Real Compose inspection
+found that the resolved delegate omits inputType; narrow EditText/SET_TEXT support
+was added with password and known numeric/phone guards retained. The helper later
+failed twice with `Android snapshot helper returned insufficient foreground app content`.
+The screenshot still showed the app, but physical UI automation stopped as required.
+The emulator later disappeared from adb; no app crash cause was established.
 
-Fresh local gate:
+End-to-end microphone/overlay insertion, routing, cancellation during native
+inference, landscape, dark/large-text layouts, battery and thermal behavior remain
+unverified. Model declaration is not proof of every language or phone.
 
-- `:app:testDebugUnitTest`: 39 tests passed; zero failures and zero skips.
-- `:app:lintDebug`: passed with zero errors and six warnings.
-- `:app:assembleDebug`: passed.
-- `:app:assembleDebugAndroidTest`: passed.
-- Combined gate: `BUILD SUCCESSFUL`.
-- APK: 61,511,776 bytes; SHA-256 `874671185576e46c289f561c9d91d53a760caa8e9e2fada5fad1f3444ec86089`.
-- APK Signature Scheme v2 verified with the Android debug certificate.
+SemanticModelInstrumentedTest checks real English/Czech corrections, global reset
+after a long draft, and quoted literal commands. It requires actual weights and
+contains no assumption-based skips.
 
-Isolated Google Play AVD evidence (`VoiceLayerResearch_API35_22Aug`, API 35):
+The real Huawei semantic suite is not green. English and Czech five-to-six
+corrections and whole-draft reset passed with the initial prompt; literal quoted
+output retained its introductory instruction. Prompt changes did not resolve the
+suite and one regressed reset, so they were reverted. The feature stays off by
+default and is visibly experimental. A sampled GPU-inference PSS was 2,402,904 KiB,
+including 2,220,912 KiB graphics; this is neither a peak nor a RAM minimum.
 
-- Clean onboarding rendered without a crash.
-- Seeded debug QA rendered Home, Dictionary, Settings, and Czech Calibration screens.
-- Dictionary empty/add controls, Raw/Light/Polished cleanup choices, bubble size/opacity controls, and the full calibration prompt were present in UI trees.
-- The package launched repeatedly without a fresh `AndroidRuntime` crash.
-- Exact-serial instrumentation completed with one expected assumption skip: the API 35 x86_64 AVD lacked the model pack/safe semantic capacity.
-- The physical Samsung and other agents' emulators were not modified.
+## Reproduce explicit native recognition
 
-Competitor verification:
+Install/select Zipformer English INT8 in the app, then download the public fixture:
 
-- Phravia XAPK SHA-256 matched `4b0f105d23d6645ed8ca5d09824a4535975ba54932da5cf8ed0a5fbe572683bb`.
-- Phravia base and splits verified with APK Signature Scheme v3 and Google Play App Signing; package `com.omkar.voiceflow`, version `1.6.7` (`59`).
-- Sideload onboarding redirected to Google Play because the bundle requires Play licensing. Installer identity was not spoofed and the license check was not bypassed.
-- Current Wispr Flow 2.2.4 package/certificate and UI were verified from official documentation and APKMirror metadata; direct bundle download is disabled by the developer.
+```powershell
+curl.exe -fL -o .reference/tmp/asr-fixture.wav https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26/resolve/672fbf1b30579d6585301139bb363f42a0ad4a24/test_wavs/0.wav
+adb -s DEVICE push .reference/tmp/asr-fixture.wav /data/local/tmp/selia-asr-fixture.wav
+adb -s DEVICE shell run-as com.majkeylab.seliaspeak cp /data/local/tmp/selia-asr-fixture.wav files/asr-fixture.wav
+adb -s DEVICE install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb -s DEVICE shell am instrument -w -e class cz.localvoice.app.RecognitionModelInstrumentedTest com.majkeylab.seliaspeak.test/androidx.test.runner.AndroidJUnitRunner
+```
 
-Open release gates:
+Replace DEVICE with an adb device serial. Build both APKs first and install the
+debug app. The test validates the fixture SHA-256, actual native partials and final
+text. It does not prove word accuracy or microphone capture. Neither public
+fixture nor model weights are committed.
 
-- Fresh physical SM-S938B Czech microphone/calibration benchmark.
-- Fresh live push-to-talk/cancel/undo overlay check after the phone is available.
-- Local semantic quality remains gated by the release-device corpus; no production-quality claim is made from build success alone.
+## Review
 
-## Production foundation checkpoint
+Independent core review found stale AudioCapture cleanup and cancellation missing
+between batch-ASR chunks. Per-recording resource ownership and coroutine checks
+address both; the real-method ownership regression passes. Claude review could
+not run because its account weekly quota was exhausted. Supplementary model advice
+was checked against source; quota/region failures did not become approval evidence.
 
-Verified locally on 2026-08-20 after the production-redesign audit.
-
-Implemented behavior:
-
-- The accessibility overlay is event-driven and hidden without a supported focused text field.
-- Password, password-variation, numeric, phone, disabled, invisible, and user-excluded targets are rejected by one shared policy.
-- Package, window, view ID, bounds, text, and selection must still match before insertion or undo.
-- An energy VAD rejects silence and separated noise bursts before Whisper or Qwen loads.
-- A semantic-engine failure is reported before raw fallback is used.
-- Undo is a separate eight-second action; it no longer replaces the next dictation gesture.
-- TTS is initialized only after a playback gesture.
-- AccessibilityService use has a separate disclosure with an unchecked affirmative-consent control. The service stays hidden when that consent is missing, even if enabled directly in Android settings.
-- System and enabled-keyboard locales are merged and deduplicated before supported languages are offered.
-
-Automated evidence:
-
-- `:app:testDebugUnitTest`: 24 tests, zero failures, zero skips.
-- `:app:lintDebug`: zero errors and six dependency-version warnings.
-- `:app:assembleDebug`: passed.
-- `:app:assembleDebugAndroidTest`: passed.
-- Debug APK: 61,919,618 bytes.
-- Debug APK SHA-256: `e3ebd41415bc01f2cc4ea69522e0575343cd7c35355d2cd4049ba3c58ca4f05a`.
-- APK Signature Scheme v2 verification passed with the Android debug certificate.
-
-Connected and live validation is not complete. `adb devices -l` returned no targets. The installed API 35 system-image directory contained only incomplete installer metadata; `avdmanager` rejected it as an invalid package. A subsequent `sdkmanager` download ended without a registered `package.xml`, and the replacement `android sdk` bootstrap failed while moving its temporary file. No SM-S938B was discoverable over ADB. Therefore overlay visibility, password-field behavior, focus-loss cancellation, lazy-TTS startup improvement, latency, PSS, offline dictation, and the new release-device semantic gate are not claimed as live-passed in this checkpoint.
-
-Verified on 2026-08-20.
-
-## Build result
-
-- Package: `cz.localvoice.app`
-- Version: `0.2.0` (`versionCode` 2)
-- Minimum Android API: 26
-- Target and compile API: 36
-- APK size: 61,436,768 bytes
-- APK SHA-256: `6bd9ded39860470fae34b2914983c40e96d77495f790fe735f13f4ecafecc96d`
-
-The delivered APK uses the Android debug signing key. It is installable. It is not a Play Store release artifact.
-
-## Automated checks
-
-The final command ran `testDebugUnitTest`, `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest`, and `connectedDebugAndroidTest`.
-
-- Eleven JVM tests passed.
-- Android Lint reported zero errors and six dependency-version warnings.
-- Both APKs compiled and assembled.
-- Instrumented semantic tests skipped on the two attached x86_64 AVDs because the app's memory gate rejected local CPU inference.
-
-The API 35 AVD has 2,019,420 KiB RAM. A forced CPU inference without the gate was killed during XNNPACK initialization. The selected model's official Samsung CPU benchmark reports about 2.9 GB peak memory. The app now requires at least 6 GiB total RAM and 3 GiB available RAM before it attempts the CPU fallback. Low-memory devices use raw local dictation instead of risking an out-of-memory process kill.
-
-## Live emulator checks
-
-The following flows ran on the API 35 x86_64 AVD:
-
-- A clean install opened the onboarding flow without a crash.
-- The language page read the system locale list.
-- The style page showed English casual, balanced, and professional examples after English selection.
-- The custom-style page enforced the 200-character minimum and opened the system document chooser for UTF-8 text files.
-- Microphone denial left the app stable. A later grant updated the status.
-- The AccessibilityService overlay appeared without the draw-over-apps permission.
-- The overlay kept focus in a Compose text field and moved through `MIC`, `REC`, processing, and `MIC` states.
-- Sherpa-ONNX 1.13.6 loaded and transcribed captured audio.
-- LiteRT-LM 0.16.1 loaded the local model runtime.
-- A target-window change during processing blocked text insertion and used the clipboard fallback.
-- The Voice Lab kept recording disabled until consent confirmation.
-- The final APK installed and launched with no `AndroidRuntime` crash.
-
-## Model verification
-
-The final pack contains 601,273,903 bytes. Every file has a pinned URL, byte count, and SHA-256 value. The downloader resumes a `.part` file with an HTTP Range request. It verifies the completed file before moving it into place.
-
-The selected Qwen model is `qwen3_0_6b_mixed_int4.litertlm`. Its local and device-side SHA-256 matched `b1baab462f6be49d70eada79d715c2c52cd9ece0cad00bddf6a2c097d23498e9`.
-
-## Checks not completed
-
-No arm64 physical phone was attached. The Samsung SM-S938B Android 16 checks remain open:
-
-- Czech microphone audio through Whisper and Qwen.
-- GPU latency, memory, battery, and thermal behavior.
-- Czech offline TTS voice availability.
-- English and Czech instrumented semantic assertions on arm64.
-- OEM accessibility settings and overlay behavior.
-
-Personal-voice synthesis remains locked. Voice Lab records and validates a consented reference, but the app does not claim Czech voice cloning until an Android engine passes a Czech benchmark.
+No common-corpus WER/CER measurements are claimed for catalog variants.
+Model-declared language support is not project verification of every language.

@@ -60,9 +60,13 @@ class ClipboardFallbackTest {
 
             service.offerCopy("another transcript")
             val interrupted = ShadowAlertDialog.getLatestAlertDialog()
+            ServiceConnection.update(true)
             service.onInterrupt()
             assertFalse(interrupted.isShowing)
             assertEquals("keep me", clipboard.primaryClip?.getItemAt(0)?.text)
+            assertTrue(ServiceConnection.connected.value)
+            service.onUnbind(null)
+            assertFalse(ServiceConnection.connected.value)
         } finally {
             controller.destroy()
         }

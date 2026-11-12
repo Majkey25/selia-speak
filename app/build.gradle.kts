@@ -9,11 +9,11 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "cz.localvoice.app"
-        minSdk = 26
+        applicationId = "com.majkeylab.seliaspeak"
+        minSdk = 28
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.4.2"
+        versionCode = 1
+        versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
@@ -56,7 +56,7 @@ kotlin {
 
 dependencies {
     implementation(files("libs/sherpa-onnx-1.13.6.aar"))
-    implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.1")
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.19.0")
 
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.activity:activity-compose:1.13.0")

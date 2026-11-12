@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LocalVoiceAndroid"
+rootProject.name = "SeliaSpeak"
 include(":app")

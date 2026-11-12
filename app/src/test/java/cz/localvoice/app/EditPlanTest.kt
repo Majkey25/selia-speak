@@ -6,13 +6,35 @@ import kotlin.test.assertFailsWith
 
 class EditPlanTest {
     @Test
-    fun parsesJsonAfterQwenThinkingText() {
+    fun rejectsThinkingTextOutsideJson() {
         val response = """
             <think>short private reasoning</think>
             {"action":"insert","text":"V šest.","reason":"latest correction"}
         """.trimIndent()
 
-        assertEquals("V šest.", EditPlan.parse(response, hasSelection = false).text)
+        assertFailsWith<IllegalArgumentException> { EditPlan.parse(response, hasSelection = false) }
+    }
+
+    @Test
+    fun parsesOneCompleteJsonObjectWithEscapedText() {
+        assertEquals(
+            "Say \"OK\".",
+            EditPlan.parse(""" {"action":"insert","text":"Say \"OK\".","reason":"literal"} """, false).text,
+        )
+    }
+
+    @Test
+    fun rejectsTrailingPayloadAndInvalidFieldTypesWithoutLeakingPrivateText() {
+        for (response in listOf(
+            """{"action":"insert","text":"private-sentinel","reason":"literal"} extra""",
+            """{"action":"insert","text":"private-sentinel","text":"second","reason":"literal"}""",
+            """{"action":"insert","text":null,"reason":"private-sentinel"}""",
+            """{'action':'insert','text':'private-sentinel','reason':'literal'}""",
+        )) {
+            val failure = assertFailsWith<IllegalArgumentException> { EditPlan.parse(response, false) }
+            kotlin.test.assertFalse("private-sentinel" in failure.toString())
+            assertEquals(null, failure.cause)
+        }
     }
 
     @Test

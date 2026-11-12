@@ -1,45 +1,97 @@
-# Install Local Voice
+# Selia Speak
 
-Local Voice is an Android-only, local-first dictation app. It keeps the active keyboard and adds a movable microphone through an `AccessibilityService` overlay.
+Private Android dictation. Keep your keyboard and choose your local speech model.
 
-[Privacy policy, terms and data deletion](https://majkey25.github.io/local-voice-android/)
-are linked from every app screen. Version 0.4.2 bounds model downloads and asks
-before copying a dictation result to the system clipboard.
+Development build. Native speech recognition passed on Huawei Android 10 and an
+Android 9 emulator, including offline inference. Full floating-dictation acceptance
+is still pending; see [QA](docs/QA.md).
 
-## Install the APK
+Android 9 or later, with an arm64 phone or x86_64 emulator. Application ID:
+`com.majkeylab.seliaspeak`. English and Czech UI follows the device language.
+Speech languages are independent of interface language.
 
-1. Download an APK from [GitHub Releases](https://github.com/Majkey25/local-voice-android/releases) to the phone.
-2. Allow installation from the app that opens the APK.
-3. Install and open **Local Voice**.
-4. Pick English, Czech, German, French, or Spanish. This choice is independent of the phone's system language.
-5. Pick a writing style or import a UTF-8 `.txt` writing sample.
-6. Download the 601 MB Multilingual Offline Pack.
-7. Allow microphone access.
-8. Enable **Local Voice - floating microphone** in Android accessibility settings.
+## Use
 
-Tap the floating **MIC** button to start and stop dictation. Drag the button to move it. Tap **↶** within eight seconds to undo the last insertion.
+1. Finish the short introduction and grant microphone access.
+2. Read the separate accessibility explanation and enable Selia Speak's service.
+3. Search the model catalog by language. Download and select a speech model.
+4. Open an editable field with your usual keyboard. Drag the floating microphone
+   to a comfortable position, tap to start, and tap again to finish.
 
-## Personalize recognition
+The dashboard shows permissions, the selected model, and whether dictation is
+enabled. Several models can be installed; one recognizer runs at a time.
+Selected, configured, or in-use models cannot be deleted.
 
-- **Dictionary** stores exact spoken → written forms per language and applies them even in Raw mode.
-- **Snippets** expand only an exact spoken trigger, so ordinary sentences are not replaced accidentally.
-- **Voice calibration** records a roughly two-minute guided sample in RAM, compares local Whisper output with the displayed text, and proposes explicit dictionary corrections. Consecutive mistakes in a name or product stay one phrase. Later sessions apply confirmed terms first and propose only new corrections. It does not claim to fine-tune Whisper model weights.
-- **Cleanup** offers Raw, Light, and Polished profiles. Bubble size and opacity are adjustable.
+## Models and language modes
 
-Tap starts normal toggle dictation. Hold the bubble for push-to-talk; release to process. A separate cancel action is visible while recording.
+The verified catalog includes multilingual Whisper Tiny/Base/Small INT8,
+Omnilingual CTC 300M, an English streaming Zipformer, a separate Whisper language
+detector, and optional Qwen text editing. Exact revisions, sizes, hashes,
+languages, and licenses live in [ModelCatalog.kt](app/src/main/java/cz/localvoice/app/ModelCatalog.kt).
+The catalog is a checked set of compatible exports, not every model on the internet.
 
-## Build the APK
+Search and filter by language, download size, automatic language support, and
+native streaming. Unknown RAM requirements and WER/CER measurements stay unknown.
+Error-rate sorting compares matching language, metric, dataset, and method.
+Model-declared language support does not establish equal quality in every language.
 
-Run the repository-defined Gradle wrapper with JDK 17:
+Advanced settings are collapsed by default:
+
+* Choose a manual language when the model accepts a hint, or automatic transcription.
+* Install a separate language detector and map its supported languages to installed
+  recognizers. Detection uses initial audio, then the recognizer receives the whole
+  recording. Unmapped languages produce an error.
+* Enable live previews with a native streaming model. Whisper and Omnilingual are
+  batch models here and finish transcription after Stop.
+* Install the optional experimental local text model to process corrections after Stop. It can
+  replace recent text or discard the current dictation for a replacement. It cannot
+  rewrite unseen older text outside its bounded context. Review important output.
+
+Live semantic correction while recording is not implemented. Streaming previews
+contain speech recognition output; optional semantic editing runs after Stop.
+The real-model semantic acceptance suite currently fails on literal quoted output.
+This feature remains off by default and is not release-ready.
+Recording is bounded to 15 minutes and text to 50,000 UTF-16 characters.
+Hardware memory, latency, battery use, and language accuracy require device checks.
+
+## Privacy and safe insertion
+
+No account, advertising, analytics, API key, or cloud transcription. Downloads
+contact Hugging Face and verify pinned byte counts and SHA-256 hashes. Dictation
+audio stays in RAM; transcript history is off. Recording requires an explicit gesture.
+
+Accessibility identifies the active field and inserts requested text. Fields
+reported as passwords, numeric or phone inputs are blocked. Compose editors that
+omit their input type are supported only as editable text controls with a text
+replacement action. Their numeric intent cannot be inferred reliably; password
+flags still block access. Interim updates replace only this
+dictation's span. Field, cursor, and application changes block further updates.
+Cancel and Undo restore text only while the field still matches.
+Copy requires an explicit action and shares text with the system clipboard.
+
+[Privacy, terms, and deletion](https://majkey25.github.io/selia-speak/).
+
+## Build and verify
+
+Use JDK 17, Android SDK 36, and the repository's Gradle wrapper:
 
 ```powershell
-.\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+.\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest --console=plain
 ```
 
-The build writes `app/build/outputs/apk/debug/app-debug.apk`.
+APK: `app/build/outputs/apk/debug/app-debug.apk`. Debug signing is for local
+testing; it is not a Google Play production signing configuration.
 
-## Read the project records
+The explicit `SemanticModelInstrumentedTest` requires the catalog editing model.
+It exercises real inference and fails rather than skips when the model is missing.
+See [QA](docs/QA.md) for evidence and gaps.
 
-- `docs/SPEC.md` defines the shipped scope.
-- `docs/RESEARCH.md` records current platform and model decisions.
-- `docs/QA.md` records the checks and known limits.
+## License and origin
+
+Original Selia Speak material is source-visible proprietary. Official binaries
+may be used without charge under [LICENSE](LICENSE); additional source or
+commercial rights require written permission. This is not an open-source license.
+
+Based on [Local Voice at 51181a9](https://github.com/Majkey25/local-voice-android/tree/51181a9b9646afe4c3509a8f479a8cdacf0eabe2).
+That previously published material retains its MIT grant. Dependencies, models,
+and contributors retain their rights. See [third-party notices](THIRD_PARTY_NOTICES.md).

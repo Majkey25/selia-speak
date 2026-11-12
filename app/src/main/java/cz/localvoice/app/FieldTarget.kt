@@ -18,6 +18,8 @@ data class FieldFacts(
     val visible: Boolean,
     val password: Boolean,
     val inputType: Int,
+    val className: String? = null,
+    val supportsSetText: Boolean = false,
 )
 
 data class FieldSnapshot(
@@ -49,9 +51,12 @@ object FieldTargetPolicy {
             -> true
             else -> false
         }
+        // Compose exposes editable text without populating AccessibilityNodeInfo.inputType.
+        val compatibleText = facts.inputType == InputType.TYPE_NULL &&
+            facts.className == "android.widget.EditText" && facts.supportsSetText
         return facts.editable && facts.enabled && facts.visible && !facts.password &&
             !passwordVariation && facts.packageName !in excludedPackages &&
-            inputClass == InputType.TYPE_CLASS_TEXT
+            (inputClass == InputType.TYPE_CLASS_TEXT || compatibleText)
     }
 
     fun isFresh(snapshot: FieldSnapshot, current: FieldFacts): Boolean = snapshot.facts == current

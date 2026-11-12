@@ -1,4 +1,12 @@
-# Android research record
+# Inherited Android research record
+
+Historical Local Voice research, retained from base `51181a9b9646afe4c3509a8f479a8cdacf0eabe2`.
+The dated competitor and device claims below have not been reverified for Selia Speak.
+They are not current compatibility or performance guarantees.
+Selia Speak's pinned model sources, sizes and capabilities are owned by
+[`ModelCatalog.kt`](../app/src/main/java/cz/localvoice/app/ModelCatalog.kt).
+Current behavior and verification gaps are recorded in [SPEC.md](SPEC.md) and [QA.md](QA.md).
+Current competitor checks are recorded separately in [ALTERNATIVES.md](ALTERNATIVES.md).
 
 Verified 2026-08-20 from current primary sources.
 
