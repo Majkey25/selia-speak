@@ -73,7 +73,7 @@ Copy requires an explicit action and shares text with the system clipboard.
 
 ## Build and verify
 
-Use JDK 17, Android SDK 36, and the repository's Gradle wrapper:
+Use JDK 17, Android SDK 37, and the repository's Gradle wrapper:
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest --console=plain
